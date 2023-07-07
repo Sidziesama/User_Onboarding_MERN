@@ -5,7 +5,7 @@
 const router = require('express').Router();
 const { User, validate } = require('../Models/user');
 const bcrypt = require('bcrypt');
-const Token = require('../Models/verificationTokens');
+// const Token = require('../Models/verificationTokens');
 const sendEmail = require('../utilities/sendEmail');
 const generateOTP = require('../utilities/otp');
 
@@ -17,9 +17,13 @@ router.post('/', async (req, res) => {
     if (error)
       return res.status(400).send({ message: error.details[0].message });
 
+    // remove extraspaces,if given, from the email.
+    req.body.email = (req.body.email).trim()
+
     user_mail = await User.findOne({ email: req.body.email });
     if (user_mail)
       return res.status(409).send({ message: "User with this mail id already exists!" });
+    
 
     const user_name = await User.findOne({ username: req.body.username })
     if (user_name)
@@ -30,9 +34,12 @@ router.post('/', async (req, res) => {
 
     const salt = await bcrypt.genSalt(Number(process.env.SALT));
     const hashPassword = await bcrypt.hash(req.body.password, salt);
-    const otp = generateOTP();
+    const hashConfirmPassword = await bcrypt.hash(req.body.confirmPassword, salt);
 
-    await new User({ ...req.body, password: hashPassword, otp: otp }).save();
+    // Generating a 25 digit alphanumeric OTP to avoid confusion between verification and password reset
+    const otp = generateOTP(25);
+
+    await new User({ ...req.body, password: hashPassword, confirmPassword: hashConfirmPassword, otp: otp }).save();
 
 
     // Send OTP to the user's email
@@ -46,8 +53,8 @@ router.post('/', async (req, res) => {
       verificationMessage: "An OTP has been sent to your email. Please verify your credentials using the received OTP."
     });
 
-
   } catch (error) {
+    console.error(error);
     res.status(500).send({ message: "Internal Server Error" });
   }
 });

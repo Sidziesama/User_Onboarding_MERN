@@ -10,6 +10,7 @@ const cors = require('cors');
 const connection = require('./databse/db');
 const userRoutes = require('./routes/users');
 const authRoutes = require('./routes/auth');
+const passwordResetRoutes = require('./routes/passwordReset') ;
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use(cors());
 // Routes
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/reset-password", passwordResetRoutes);
 
 
 const PORT = process.env.PORT || 8080 ;

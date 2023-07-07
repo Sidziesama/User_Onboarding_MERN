@@ -18,7 +18,7 @@ const userSchema = new mongoose.Schema({
   email: { type: 'string', required: true },
   collegeName: { type: 'string', required: true },
   isVerified: { type: 'boolean', default: false },
-  otp: { type: 'string', default: '1234' }
+  otp: { type: 'string', default: '0' }
 });
 
 // JWT token generation

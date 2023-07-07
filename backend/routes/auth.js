@@ -4,9 +4,9 @@ const router = require("express").Router();
 const { User } = require("../Models/user");
 const bcrypt = require("bcrypt");
 const Joi = require("joi");
-const Token = require("../Models/verificationTokens");
-const crypto = require("crypto");
-const sendEmail = require("../utilities/sendEmail");
+// const Token = require("../Models/verificationTokens");
+// const crypto = require("crypto");
+// const sendEmail = require("../utilities/sendEmail");
 
 /** This post function validates the user email and password. 
  * It checks if the email id exists in the database. If the email does not exist, it displays an Invalid Credentials Error Message
