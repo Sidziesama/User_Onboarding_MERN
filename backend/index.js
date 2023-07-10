@@ -25,7 +25,7 @@ app.use(cors());
 // Routes
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/api/reset-password", passwordResetRoutes);
+app.use("/api/forgot-password", passwordResetRoutes);
 
 
 const PORT = process.env.PORT || 8080 ;

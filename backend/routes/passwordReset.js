@@ -4,6 +4,7 @@ const sendEmail = require("../utilities/sendEmail");
 const generateOTP = require("../utilities/otp");
 const jwt = require("jsonwebtoken");
 const Joi = require("joi");
+const authenticateToken = require("../Models/authenticateToken");
 
 const validateResetPasswordRequest = (data) => {
   const schema = Joi.object({
@@ -14,7 +15,6 @@ const validateResetPasswordRequest = (data) => {
 
 const validateResetPassword = (data) => {
   const schema = Joi.object({
-    email: Joi.string().email().required().label("Email"),
     newPassword: Joi.string().min(6).required().label("New Password"),
     confirmPassword: Joi.string().min(6).required().label("Confirm Password"),
   }).options({ abortEarly: false });
@@ -70,10 +70,14 @@ router.post('/reset-password-verification', async (req, res) => {
       return res.status(400).send({ message: 'Invalid OTP.' });
     }
 
-    // Generate a new JWT token
-    const token = jwt.sign({ userId: user._id }, process.env.JWTPRIVATEKEY, { expiresIn: '1h' });
+    // Generate a JWT token
+    const token = jwt.sign({ userId: user._id }, process.env.JWTPRIVATEKEY);
 
-    res.status(200).send({ message: 'OTP verified.', token });
+    // Store the token in the user's document
+    user.resetToken = token;
+    await user.save();
+
+    res.status(200).send({ token });
 
   } catch (error) {
     console.log(error);
@@ -81,9 +85,11 @@ router.post('/reset-password-verification', async (req, res) => {
   }
 });
 
-router.post('/reset-password', async (req, res) => {
+
+
+router.put('/reset-password', authenticateToken, async (req, res) => {
   try {
-    const { token, newPassword, confirmPassword } = req.body;
+    const { newPassword, confirmPassword } = req.body;
 
     const { error } = validateResetPassword(req.body);
     if (error) {
@@ -91,37 +97,29 @@ router.post('/reset-password', async (req, res) => {
       return res.status(400).send({ message: validationErrors });
     }
 
-    // Verify the JWT token
-    try {
-      const decodedToken = jwt.verify(token, process.env.JWTPRIVATEKEY);
-      const userId = decodedToken.userId;
-
-      // Find the user in the database
-      const user = await User.findById(userId);
-      if (!user) {
-        return res.status(404).send({ message: 'Please enter a valid email.' });
-      }
-
-      // Validate new password and confirm password match
-      if (newPassword !== confirmPassword) {
-        return res.status(400).send({ message: 'Passwords do not match.' });
-      }
-
-      // Update the user's password
-      user.password = newPassword;
-      user.confirmPassword = confirmPassword;
-      await user.save();
-
-      res.status(200).send({ message: 'Password reset successful.' });
-    } catch (error) {
-      console.log(error);
-      return res.status(400).send({ message: 'Invalid or expired token.' });
+    // Find the user in the database
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).send({ message: 'User not found.' });
     }
+
+    // Validate new password and confirm password match
+    if (newPassword !== confirmPassword) {
+      return res.status(400).send({ message: 'Passwords do not match.' });
+    }
+
+    // Update the user's password
+    user.password = newPassword;
+    user.confirmPassword = confirmPassword;
+    await user.save();
+
+    res.status(200).send({ message: 'Password reset successful.' });
 
   } catch (error) {
     console.log(error);
     res.status(500).send({ message: 'Failed to reset password.' });
   }
 });
+
 
 module.exports = router;
