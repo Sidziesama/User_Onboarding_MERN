@@ -1,11 +1,18 @@
+/* This route helps the users who have forgotten their passwords.
+ * A user can verify themselves using an OTP which then directs them to a reset password page. 
+ */
+
 const router = require("express").Router();
 const { User } = require("../Models/user");
 const sendEmail = require("../utilities/sendEmail");
 const generateOTP = require("../utilities/otp");
 const jwt = require("jsonwebtoken");
 const Joi = require("joi");
-const authenticateToken = require("../Models/authenticateToken");
+const authenticateToken = require("../utilities/authenticateToken");
 
+/** This function validates the user inputs for sending the OTP to reset thier password. 
+ *  The only required string is the email. The OTP is sent to the given mail only if it is registered in the database.
+*/
 const validateResetPasswordRequest = (data) => {
   const schema = Joi.object({
     email: Joi.string().email().required().label("Email"),
@@ -13,6 +20,10 @@ const validateResetPasswordRequest = (data) => {
   return schema.validate(data);
 };
 
+/** This function validates the user Inputs for resetting their password.
+ * The required inputs are : 1) newPassword  2) confirmPassword.
+ * A JWT is attached to the header for authentication.
+ */
 const validateResetPassword = (data) => {
   const schema = Joi.object({
     newPassword: Joi.string().min(6).required().label("New Password"),
@@ -21,6 +32,9 @@ const validateResetPassword = (data) => {
   return schema.validate(data);
 };
 
+/** This post method genrates an OTP and sends it the the email for verification if and only if the email is valid.
+ * 
+ */
 router.post("/", async (req, res) => {
   try {
     const { error } = validateResetPasswordRequest(req.body);
@@ -55,6 +69,9 @@ router.post("/", async (req, res) => {
   }
 });
 
+/** This post ('/reset-password-verification') method verifies if the entered OTP matches the generated OTP.
+ * If the OTP's match, a JWT is generated and attached to the header when reseting the password.
+ */
 router.post('/reset-password-verification', async (req, res) => {
   try {
     const { email, otp } = req.body;
@@ -84,8 +101,6 @@ router.post('/reset-password-verification', async (req, res) => {
     res.status(500).send({ message: 'Failed to verify OTP to reset password.' });
   }
 });
-
-
 
 router.put('/reset-password', authenticateToken, async (req, res) => {
   try {
