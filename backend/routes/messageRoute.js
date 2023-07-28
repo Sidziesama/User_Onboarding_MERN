@@ -1,31 +1,34 @@
-// const router = require("express").Router() ; 
-// const Message = require ("../Models/message");
+// const router = require("express").Router();
 
-// // add 
+// const Message = require("../Models/messageModel");
 
-// router.post('/',async(req,res)=>{
-//   const newMessage = new Message (req.body) ;
-  
+// //add
+
+// router.post("/", async (req, res) => {
+//   const newMessage = new Message(req.body);
+
 //   try {
 //     const savedMessage = await newMessage.save();
 //     res.status(200).json(savedMessage);
-//   }
-//   catch(err){
+//   } catch (err) {
 //     res.status(500).json(err);
 //   }
 // });
 
-// router.get('/:conversationID',async(req,res)=>{
+// //get
+
+// router.get("/:conversationId", async (req, res) => {
 //   try {
-//     const messages = await Message.find ({
-//       conversationID :req.params.conversationID ,
+//     const messages = await Message.find({
+//       conversationId: req.params.conversationId,
 //     });
 //     res.status(200).json(messages);
 //   } catch (err) {
 //     res.status(500).json(err);
 //   }
-// })
-// module.exports = router ;
+// });
+
+// module.exports = router;
 
 const router = require("express").Router();
 const auth = require("../Middlewares/authMiddleware");
