@@ -31,11 +31,11 @@
 // module.exports = router;
 
 const router = require("express").Router();
-const auth = require("../Middlewares/authMiddleware");
+const auth = require("../utilities/authenticateToken");
 const {
   sendMessage,
   fetchMessage,
-} = require("../controllers/messageControllers");
+} = require("../controller/messageController");
 
 // Route to send the message to the recipient
 router.route("/").post(auth, sendMessage);

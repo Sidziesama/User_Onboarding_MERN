@@ -51,14 +51,53 @@ const server = app.listen(PORT, () => {
   console.log(`Visit  ` + colors.underline.blue(`localhost:${8080}`));
 });
 
-const io = require('socket.io')(server,{
+// const io = require('socket.io')(server,{
+//   pingTimeout: 60000,
+//   cors: {
+//     origin : 'https://localhost3000',
+//   },
+// });
+
+// io.on("Connection", (socket)=>{
+//   console.log("Connected to socket.io")
+// });
+
+const io = require("socket.io")(server, {
   pingTimeout: 60000,
   cors: {
-    origin : 'https://localhost3000',
+    origin: "*",
   },
 });
 
-io.on("Connection", (socket)=>{
-  console.log("Connected to socket.io")
+io.on("connection", (socket) => {
+  console.log("Sockets are in action");
+  socket.on("setup", (userData) => {
+    socket.join(userData._id);
+    console.log(userData.name, "connected");
+    socket.emit("connected");
+  });
+  socket.on("join chat", (room) => {
+    socket.join(room);
+    console.log("User joined room: " + room);
+  });
+  socket.on("new message", (newMessage) => {
+    var chat = newMessage.chatId;
+    if (!chat.users) return console.log("chat.users not defined");
+
+    chat.users.forEach((user) => {
+      if (user._id === newMessage.sender._id) return;
+      socket.in(user._id).emit("message received", newMessage);
+    });
+    socket.on("typing", (room) => {
+      socket.in(room).emit("typing");
+    });
+    socket.on("stop typing", (room) => {
+      socket.in(room).emit("stop typing");
+    });
+  });
+  socket.off("setup", () => {
+    console.log("USER DISCONNECTED");
+    socket.leave(userData._id);
+  });
 });
 

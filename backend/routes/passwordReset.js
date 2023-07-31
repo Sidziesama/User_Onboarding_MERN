@@ -117,10 +117,10 @@ router.put('/reset-password', authenticateToken, async (req, res) => {
     }
 
     // Find the user in the database
-    // const user = await User.findById(req.user._id);
-    // if (!user) {
-    //   return res.status(404).send({ message: 'User not found.' });
-    // }
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).send({ message: 'User not found.' });
+    }
 
     // Validate new password and confirm password match
     if (newPassword !== confirmPassword) {

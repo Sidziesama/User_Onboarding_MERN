@@ -1,5 +1,5 @@
-const Chat = require("../Models/conversation");
-const User = require("../Models/user");
+const Chat = require("../Models/conversationModel");
+const {User} = require("../Models/user.js");
 const asyncHandler = require("express-async-handler");
 
 // @desc		Access or initiate a chat between two persons
@@ -7,7 +7,9 @@ const asyncHandler = require("express-async-handler");
 // @access		private
 const accessChat = asyncHandler(async (req, res) => {
   const { userId } = req.body;
-  if (!userId) {
+  const user = await User.findOne({ userId});
+  console.log(user)
+  if (!user) {
     console.log("UserId param not sent with request");
     return res.sendStatus(400);
   }
@@ -24,7 +26,7 @@ const accessChat = asyncHandler(async (req, res) => {
 
   isChat = await User.populate(isChat, {
     path: "latestMessage.sender",
-    select: "firstName lastName email",
+    select: "firstName username email",
   });
 
   if (isChat.length > 0) {
@@ -65,7 +67,7 @@ const fetchChats = asyncHandler(async (req, res) => {
 
     allChats = await User.populate(allChats, {
       path: "latestMessage.sender",
-      select: "firstName lastName email",
+      select: "firstName username email",
     });
 
     res.status(200).send(allChats);

@@ -52,8 +52,8 @@ const {
   renameGroup,
   addToGroup,
   removeFromGroup,
-} = require("../controllers/chatControllers");
-const auth = require("../Middlewares/authMiddleware");
+} = require("../controller/chatController");
+const auth = require("../utilities/authenticateToken");
 
 router.route("/").post(auth, accessChat).get(auth, fetchChats);
 
