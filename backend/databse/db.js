@@ -1,5 +1,5 @@
-/**
- * Initializing our database on mongoose...
+/** Initializing our database on mongoose..
+ * 
  */
 
 const mongoose = require('mongoose');

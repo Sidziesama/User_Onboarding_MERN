@@ -1,5 +1,5 @@
-/*This file builds the databse schema..
- * It also generates the JWT token if all the input credentials are valid and existing in the database.
+/* This file builds the user schema..
+ * It  generates the JWT token if all the input credentials are valid and existing in the database.
  */
 
 const mongoose = require('mongoose');
@@ -8,28 +8,31 @@ const Joi = require('joi');
 const passwordComplexity = require('joi-password-complexity');
 
 //User Schema 
-
 const userSchema = new mongoose.Schema({
-  firstName: { type: 'string', required: true },
-  lastName: { type: 'string', required: true },
+  firstName: { type: 'string', required: true, trim: true },
+  lastName: { type: 'string', required: true, trim: true },
   username: { type: 'string', required: true },
   password: { type: 'string', required: true },
   confirmPassword: { type: 'string', required: true },
-  email: { type: 'string', required: true },
+  email: { type: 'string', required: true, trim: true },
   collegeName: { type: 'string', required: true },
   isVerified: { type: 'boolean', default: false },
   otp: { type: 'string', default: '0' }
-});
+},
+  {
+    timestamps: true
+  },
+);
 
-// JWT token generation
+// JWT token generation method
 userSchema.methods.generateAuthToken = function () {
-
-  const token = jwt.sign({ _id: this._id }, process.env.JWTPRIVATEKEY, { expiresIn: "7d" })
+  const token = jwt.sign({ _id: this._id }, process.env.JWTPRIVATEKEY)
   return token;
 }
 
 const User = mongoose.model("user", userSchema);
 
+// Validate Input Data
 const validate = (data) => {
   const schema = Joi.object({
 

@@ -1,12 +1,12 @@
 /* This route helps the users who have forgotten their passwords.
  * A user can verify themselves using an OTP which then directs them to a reset password page. 
  */
-
 const router = require("express").Router();
+const bcrypt = require('bcrypt');
 const { User } = require("../Models/user");
 const sendEmail = require("../utilities/sendEmail");
 const generateOTP = require("../utilities/otp");
-const jwt = require("jsonwebtoken");
+// const jwt = require("jsonwebtoken");
 const Joi = require("joi");
 const authenticateToken = require("../utilities/authenticateToken");
 
@@ -51,7 +51,7 @@ router.post("/", async (req, res) => {
     const otp = generateOTP(6);
 
     // Send OTP to the user's email
-    const subject = 'Password OTP';
+    const subject = 'OTP to Reset your password at Sidzies Website';
     const text = `Your OTP for password reset is: ${otp}`;
     await sendEmail(email, subject, text);
 
@@ -69,10 +69,10 @@ router.post("/", async (req, res) => {
   }
 });
 
-/** This post ('/reset-password-verification') method verifies if the entered OTP matches the generated OTP.
+/** This post ('forgot-password/verification') method verifies if the entered OTP matches the generated OTP.
  * If the OTP's match, a JWT is generated and attached to the header when reseting the password.
  */
-router.post('/reset-password-verification', async (req, res) => {
+router.post('/verification', async (req, res) => {
   try {
     const { email, otp } = req.body;
 
@@ -88,13 +88,14 @@ router.post('/reset-password-verification', async (req, res) => {
     }
 
     // Generate a JWT token
-    const token = jwt.sign({ userId: user._id }, process.env.JWTPRIVATEKEY);
+    const token = user.generateAuthToken();
+
 
     // Store the token in the user's document
     user.resetToken = token;
     await user.save();
-
-    res.status(200).send({ token });
+    console.log("OTP Match. Please Reset your password.")
+    res.status(200).send({ JWT_token: token, message: "OTP Match. Please Reset your password." });
 
   } catch (error) {
     console.log(error);
@@ -102,6 +103,9 @@ router.post('/reset-password-verification', async (req, res) => {
   }
 });
 
+/** This put('/forgot-password/reset-password') resets the password while also hashing it
+ * 
+ */
 router.put('/reset-password', authenticateToken, async (req, res) => {
   try {
     const { newPassword, confirmPassword } = req.body;
@@ -113,7 +117,7 @@ router.put('/reset-password', authenticateToken, async (req, res) => {
     }
 
     // Find the user in the database
-    const user = await User.findById(req.user.userId);
+    const user = await User.findById(req.user._id);
     if (!user) {
       return res.status(404).send({ message: 'User not found.' });
     }
@@ -123,9 +127,15 @@ router.put('/reset-password', authenticateToken, async (req, res) => {
       return res.status(400).send({ message: 'Passwords do not match.' });
     }
 
-    // Update the user's password
-    user.password = newPassword;
-    user.confirmPassword = confirmPassword;
+    // Hash the passwords before saving them
+    const salt = await bcrypt.genSalt(Number(process.env.SALT));
+    const hashPassword = await bcrypt.hash(newPassword, salt);
+    const hashConfirmPassword = await bcrypt.hash(confirmPassword, salt);
+
+    // Update the user's password and confirmPassword with the hashed values
+    user.password = hashPassword;
+    user.confirmPassword = hashConfirmPassword;
+
     await user.save();
 
     res.status(200).send({ message: 'Password reset successful.' });

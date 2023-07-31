@@ -1,7 +1,7 @@
 /* This JavaScript file sends the email to the user.
-* In case of verification, this function will send an OTP to the given mail id.
+* This function will send an OTP to the given mail id.
+* We call this function when verifying user creds and when a user wants to reset his password. 
  */
-
 const nodemailer = require('nodemailer');
 
 module.exports = async (email, subject, text) => {
